@@ -1,0 +1,37 @@
+<?php
+
+namespace scphp\model;
+
+/**
+ * Base class for all Executable Content SCXML document nodes.
+ *
+ * @author bherring
+ */
+abstract class ExecutableNode extends CompoundNode
+{
+
+    /**
+     * Execute this action instance.
+     *
+     * @param evtDispatcher The EventDispatcher for this execution instance
+     * @param errRep        The ErrorReporter to broadcast any errors
+     *                      during execution.
+     * @param scInstance    The state machine execution instance information.
+     * @param appLog        The application Log.
+     * @param derivedEvents The collection to which any internal events
+     *                      arising from the execution of this action
+     *                      must be added.
+     *
+     * @throws ModelException If the execution causes the model to enter
+     *                        a non-deterministic state.
+     * @throws SCXMLExpressionException If the execution involves trying
+     *                        to evaluate an expression which is malformed.
+     */
+//    abstract public function execute(EventDispatcher $evtDispatcher,
+//            ErrorReporter $errRep,
+//            SCInstance $scInstance,
+//            Log $appLog,
+//            Collection $derivedEvents);
+
+    abstract public function execute($logger);
+}
