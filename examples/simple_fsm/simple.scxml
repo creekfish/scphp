@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<?access-control allow="*"?>
+<scxml version="1.0" initial="start">
+    <state id="first">
+        <transition event="one" target="second" />
+    </state>
+    <state id="second">
+        <transition event="two" target="first" />
+        <state id="sub_second">
+            <transition event="three" target="final">
+                    </transition>
+        </state>
+    </state>
+ </scxml>
