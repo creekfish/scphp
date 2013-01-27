@@ -46,7 +46,7 @@ abstract class CompoundNode extends DocumentNode
     {
         if (!$this->isValidChild($child))
         {
-            throw ModelException(get_class($child) . ' is not a valid child type for ' . get_class($this));
+            throw new ModelException(get_class($child) . ' is not a valid child type for ' . get_class($this));
         }
         $this->children[$child->getDocumentOrder()] = $child;
         $child->setParent($this);
@@ -77,11 +77,11 @@ abstract class CompoundNode extends DocumentNode
      *
      * @param CompoundNode $parent
      */
-    public function setParent(CompoundNode $parent)
+    public function setParent(CompoundNode $parent = NULL)
     {
-        if (!$this->isValidParent($parent))
+        if ($parent !== NULL && !$this->isValidParent($parent))
         {
-            throw ModelException(get_class($parent) . ' is not a valid parent type for ' . get_class($this));
+            throw new ModelException(get_class($parent) . ' is not a valid parent type for ' . get_class($this));
         }
         $this->parent = $parent;
     }

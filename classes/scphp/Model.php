@@ -13,6 +13,11 @@ use scphp\model\TransitionTarget;
 class Model
 {
     /**
+     * @var int
+     */
+    private $doc_order;
+
+    /**
      * @var Scxml
      */
     private $scxml;
@@ -30,6 +35,7 @@ class Model
 
     public function __construct()
     {
+        $this->doc_order = 0;
         $this->scxml = new Scxml();
     }
 
@@ -50,7 +56,7 @@ class Model
      * @param model\CompoundNode $parent
      * @return void
      */
-    public function addNode(CompoundNode $node, CompoundNode $parent)
+    public function addNode(CompoundNode $node, CompoundNode $parent = NULL)
     {
         if ($node instanceof TransitionTarget)
         {
@@ -62,7 +68,11 @@ class Model
                 $this->scxml->setInitial($node);
             }
         }
-        $parent->addChild($node);
+        if ($parent !== NULL)
+        {
+            $node->setDocumentOrder($this->doc_order++);
+            $parent->addChild($node);
+        }
         $node->setParent($parent);
     }
 
