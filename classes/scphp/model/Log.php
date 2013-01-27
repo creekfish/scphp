@@ -32,8 +32,8 @@ class Log extends ExecutableNode
     public function isValidParent(CompoundNode $parent)
     {
         return ($parent instanceof Transition ||
-            $parent instanceof OnEntry ||
-            $parent instanceof OnExit
+            $parent instanceof Onentry ||
+            $parent instanceof Onexit
         );
     }
 

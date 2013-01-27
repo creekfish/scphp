@@ -8,7 +8,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class OnExit extends CompoundTarget
+class Onexit extends CompoundTarget
 {
     /**
      * Return TRUE if the provided node is a valid parent node type for this node.
