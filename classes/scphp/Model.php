@@ -2,8 +2,10 @@
 
 namespace scphp;
 
-use scphp\model\Scxml;
 use scphp\model\CompoundNode;
+use scphp\model\Event;
+use scphp\model\Scxml;
+use scphp\model\Transition;
 use scphp\model\TransitionTarget;
 use \scphp\model\ModelValidationException;
 
@@ -28,6 +30,11 @@ class Model
      */
     private $targets;
 
+    /**
+     * @var array of Transition
+     */
+    private $transitions;
+
 
     public function __construct()
     {
@@ -36,6 +43,7 @@ class Model
     }
 
     /**
+     * Add a node to this model.
      *
      * @param model\CompoundNode $node
      * @param model\CompoundNode $parent
@@ -50,6 +58,10 @@ class Model
             // keep up with all transition targets
             $this->addTarget($node);
         }
+        if ($node instanceof Transition)
+        {
+            $this->addTransition($node);
+        }
         if ($parent === NULL)
         {
             // this is the "parent" for the SCXML doc node
@@ -62,7 +74,10 @@ class Model
     }
 
     /**
+     * Add a TransitionTarget for this model.
+     *
      * @param \scphp\model\TransitionTarget $target
+     * @return void
      */
     public function addTarget(TransitionTarget $target)
     {
@@ -83,6 +98,48 @@ class Model
     public function getTargets()
     {
         return $this->targets;
+    }
+
+    /**
+     * Add a Transition to this model.
+     *
+     * @param \scphp\model\Transition $transition
+     * @return void
+     */
+    public function addTransition(Transition $transition)
+    {
+        $event = $transition->getEvent();
+        $idx = (!empty($event)) ? $event->getName() : NULL;
+        if (empty($idx))
+        {
+            $idx = NULL;
+        }
+        $this->transitions[$idx][] = $transition;
+    }
+
+    /**
+     * Return a list of all Transitions in this model
+     * that can be triggered by the given event.
+     *
+     * @param \scphp\model\Event $event
+     * @return array of Transition
+     */
+    public function getTransitions(Event $event)
+    {
+        $event_key = (!empty($event)) ? $event->getName() : NULL;
+        return $this->transitions[$event_key];
+    }
+
+    /**
+     * Return a list of all event names that can trigger
+     * transitions in this model.
+     * NOTE: NULL is a valid event name
+     *
+     * @return array of string
+     */
+    public function getTriggers()
+    {
+        return array_keys($this->transitions);
     }
 
     /**
@@ -131,13 +188,27 @@ class Model
     */
     public function validateTargets()
     {
+        $valid_targets = array_keys($this->getTargets());
         // validate that all transitions target valid nodes in the model
+        foreach ($this->transitions as $transition_list)
+        {
+            foreach ($transition_list as $transition)
+            {
+                $transition_event = $transition->getEvent();
+                foreach ($transition->getTargets() as $target)
+                {
+                    if ($target !== NULL && !in_array($target, $valid_targets))
+                    {
+                        throw new ModelValidationException(
+                                "Invalid target '{$target}' for " .
+                                "transition with event '{$transition_event}'"
+                        );
+                    }
+                }
+            }
+        }
 
-        // traverse the model to check all transitions
 
-//        throw new ModelValidationException("Model validation failed: " .
-//                "invalid transition target '{$target_id}' for '{$transition_id}'"
-//        );
     }
 
     public function __toString()
@@ -157,7 +228,6 @@ class Model
         $ret .= $indent . (string) $node . PHP_EOL;
         foreach ($node->getChildren() as $child)
         {
-//            $ret .= $indent . (string) $child . PHP_EOL;
             $ret .= $this->recursiveToString($child, $depth+1);
         }
         return $ret;

@@ -81,6 +81,8 @@ abstract class DocumentNode
     }
 
     /**
+     * Set the model for this node.
+     *
      * @param \scphp\Model $model
      */
     public function setModel($model)
@@ -89,6 +91,8 @@ abstract class DocumentNode
     }
 
     /**
+     * Get the model for this node.
+     *
      * @return \scphp\Model
      */
     public function getModel()

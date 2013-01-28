@@ -7,8 +7,8 @@
     <state id="second">
         <transition event="two" target="first" />
         <state id="sub_second">
-            <transition event="three" target="final">
-                    </transition>
+            <transition event="three" target="first">
+            </transition>
         </state>
     </state>
  </scxml>

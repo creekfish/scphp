@@ -29,6 +29,7 @@ abstract class CompoundNode extends DocumentNode
      */
     private $initial;
 
+
     public function __construct()
     {
         $this->children = array();
@@ -58,7 +59,7 @@ abstract class CompoundNode extends DocumentNode
             if (empty($idx))
             {
                 // ensure valid index for child node without id
-                $idx = '__NID__' . count($this->targets);
+                $idx = '__NID__' . count($this->children);
             }
             $this->children[$idx] = $child;
         }
@@ -83,14 +84,6 @@ abstract class CompoundNode extends DocumentNode
      */
     public function getChild($target_id)
     {
-//        foreach ($this->children as $child)
-//        {
-//            if ($child->getId() === $target_id)
-//            {
-//                return $child;
-//            }
-//        }
-//        return NULL;
         $this->children[$target_id];
     }
 

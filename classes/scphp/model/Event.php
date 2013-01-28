@@ -6,7 +6,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class Event extends DocumentNode
+class Event
 {
     /**
      * Name of the event.
@@ -66,5 +66,10 @@ class Event extends DocumentNode
     public function getExtraContext()
     {
         return $this->context;
+    }
+
+    public function __toString()
+    {
+        return $this->getName();
     }
 }
