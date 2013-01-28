@@ -20,6 +20,13 @@ class Event extends DocumentNode
      */
     private $context;
 
+
+    public function __construct($name)
+    {
+        $this->name = $name;
+        $this->context = NULL;
+    }
+
     /**
      * Set the name of this event.
      *

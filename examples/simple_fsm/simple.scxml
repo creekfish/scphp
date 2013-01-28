@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <?access-control allow="*"?>
-<scxml version="1.0" initial="start">
+<scxml version="1.0" initial="first">
     <state id="first">
         <transition event="one" target="second" />
     </state>

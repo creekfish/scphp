@@ -21,6 +21,13 @@ abstract class DocumentNode
      */
     private $id;
 
+    /**
+     * The SCPHP model for this node.
+     * @var \scphp\Model
+     */
+    private $model;
+
+
     public function __construct()
     {
         $this->document_order = NULL;
@@ -64,12 +71,33 @@ abstract class DocumentNode
      *
      * @param string $id - the id to set
      * @return void
-     * @throws SCXMLModelException
+     * @throws ModelException
      */
     public function setId($id) {
-        if (!is_string($id)) {
-            throw new SCXMLModelException('Id must be string.');
+        if (!is_null($id) && !is_string($id)) {
+            throw new ModelException('Id must be string.');
         }
         $this->id = $id;
+    }
+
+    /**
+     * @param \scphp\Model $model
+     */
+    public function setModel($model)
+    {
+        $this->model = $model;
+    }
+
+    /**
+     * @return \scphp\Model
+     */
+    public function getModel()
+    {
+        return $this->model;
+    }
+
+    public function __toString()
+    {
+        return end(explode('\\', get_class($this))).':: id:'.$this->getId().'; doc_order:'.$this->getDocumentOrder();
     }
 }

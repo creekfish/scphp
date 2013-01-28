@@ -48,7 +48,20 @@ abstract class CompoundNode extends DocumentNode
         {
             throw new ModelException(get_class($child) . ' is not a valid child type for ' . get_class($this));
         }
-        $this->children[$child->getDocumentOrder()] = $child;
+        if ($child instanceof Initial)
+        {
+            $this->initial = $child;
+        }
+        else
+        {
+            $idx = $child->getId();
+            if (empty($idx))
+            {
+                // ensure valid index for child node without id
+                $idx = '__NID__' . count($this->targets);
+            }
+            $this->children[$idx] = $child;
+        }
         $child->setParent($this);
     }
 
@@ -60,6 +73,25 @@ abstract class CompoundNode extends DocumentNode
     public function getChildren()
     {
         return $this->children;
+    }
+
+    /**
+     * Fetch a child by id.
+     *
+     * @param string $target_id
+     * @return CompoundNode | NULL
+     */
+    public function getChild($target_id)
+    {
+//        foreach ($this->children as $child)
+//        {
+//            if ($child->getId() === $target_id)
+//            {
+//                return $child;
+//            }
+//        }
+//        return NULL;
+        $this->children[$target_id];
     }
 
     /**
@@ -97,14 +129,28 @@ abstract class CompoundNode extends DocumentNode
     }
 
     /**
-     * Set the initial child "sub-state" of this node.
+     * Set the initial child "sub-state" of this node from
+     * the id specified in the initial attribute value.
      *
-     * @param CompoundNode $initial
+     * @param string $initial_attr_value
      */
-    public function setInitial(CompoundNode $initial)
+    public function setInitial($initial_attr_value)
     {
-        $this->initial = $initial;
-        $initial->setParent($this);
+        $initial = $this->getModel()->getTarget($initial_attr_value);
+        if (isset($initial) && in_array($initial, $this->children))
+        {
+            $this->initial = $initial;
+        }
+        else
+        {
+            throw new ModelException("Invalid id '{$initial_attr_value}' specified in initial attribute.");
+        }
+    }
+
+    public function __toString()
+    {
+        $init = $this->getInitial();
+        return parent::__toString() . '; intitial:' . ((isset($init)) ? $init->getId() : 'N/A');
     }
 
     /**

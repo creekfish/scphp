@@ -22,10 +22,10 @@ class Transition extends CompoundNode
     private $condition;
 
     /**
-     * List of targets (if any) for this transition in document order.
+     * List of target ids (if any) for this transition in document order.
      * If more than one target is specified, they must belong to the
      * same parallel region.
-     * @var TransitionTarget[]
+     * @var array of string
      */
     private $targets;
 
@@ -39,6 +39,7 @@ class Transition extends CompoundNode
     {
         $this->event = NULL;
         $this->condition = NULL;
+        $this->targets = array();
         parent::__construct();
     }
 
@@ -77,17 +78,6 @@ class Transition extends CompoundNode
     }
 
     /**
-     * Get list of targets for this transition (possibly none),
-     * in document order.
-     *
-     * @return TransitionTarget[] - List of targets
-     */
-    public function getTargets()
-    {
-        return $this->targets;
-    }
-
-    /**
      * Get the parent target of this transition.
      *
      * @return TransitionTarget
@@ -101,11 +91,11 @@ class Transition extends CompoundNode
      * Set the trigger event for this transition. Set to NULL
      * if there is no event.
      *
-     * @param Event $event - Trigger event for this transition, or NULL
+     * @param string $event - Trigger event for this transition, or NULL
      */
-    public function setEvent(Event $event)
+    public function setEvent($event)
     {
-        $this->event = $event;
+        $this->event = new Event($event);
     }
 
     /**
@@ -122,7 +112,7 @@ class Transition extends CompoundNode
     /**
      * Set list of targets for this transition.
      *
-     * @param TransitionTarget[] $targets
+     * @param array of string $targets
      */
     public function setTargets(array $targets)
     {
@@ -130,13 +120,71 @@ class Transition extends CompoundNode
     }
 
     /**
-     * Add a target for this transition.
+     * Add a target id for this transition.
      *
-     * @param TransitionTarget $target
+     * @param string $target_id
+     * @return void
+     * @throws ModelException
      */
-    public function addTarget(TransitionTarget $target)
+    public function addTarget($target_id)
     {
-        $this->targets[$target->getDocumentOrder()] = $target;
+        if (empty($target_id))
+        {
+            throw new ModelException('Transition target id must not be empty.');
+        }
+        $this->targets[] = $target_id;
+    }
+
+    /**
+     * Add a target or multiple targets (if in parallel region) for this transition
+     * based on the "targets" attribute.
+     *
+     * @param string $target id (or list of ids) of the target for this transition
+     * @return void
+     * @throws ModelException
+     */
+    public function setTarget($target)
+    {
+        //todo Implement processing of multiple targets for parallel regions
+        if (empty($target))
+        {
+            throw new ModelException('Transition target attribute must not be empty.');
+        }
+        if (!is_string($target))
+        {
+            throw new ModelException('Transition target attribute must be string.');
+        }
+        foreach (explode(' ', $target) as $target_id)
+        {
+            $this->addTarget($target_id);
+        }
+    }
+
+    /**
+     * Get list of targets for this transition (possibly none),
+     * in document order.
+     *
+     * @return array of string - List of targets
+     */
+    public function getTargets()
+    {
+        return $this->targets;
+    }
+
+    /**
+     * Get target for this transition,
+     * in document order.
+     *
+     * @return TransitionTarget target matching the given id
+     */
+    public function getTarget($target_id)
+    {
+        if (in_array($target_id, $this->targets))
+        {
+            $target = $this->getModel()->getTarget($target_id);
+            return $target;
+        }
+        throw new ModelException("Transition target '{$target_id}' not valid for transition.");
     }
 
     /**
@@ -171,4 +219,11 @@ class Transition extends CompoundNode
         return $child instanceof ExecutableNode;
     }
 
+    public function __toString()
+    {
+        $cond = ($this->getCondition() !== NULL) ? $this->getCondition()->getExpression() : 'NULL';
+        $event = ($this->getEvent() !== NULL) ? $this->getEvent()->getName() : 'NULL';
+        $target_str = implode(',' , $this->getTargets());
+        return parent::__toString() . '; event:' . $event . '; cond:' . $cond . '; targets:' . $target_str;
+    }
 }

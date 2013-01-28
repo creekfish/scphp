@@ -65,7 +65,7 @@ class Expression
      *
      * @return string
      */
-    public function toString()
+    public function __toString()
     {
         //@todo this should evaluate the expression and then render it
         return $this->text;

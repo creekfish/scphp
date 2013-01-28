@@ -74,4 +74,5 @@ abstract class TransitionTarget extends CompoundNode
         }
         return $events;
     }
+
 }

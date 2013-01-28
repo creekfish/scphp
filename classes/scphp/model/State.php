@@ -108,6 +108,9 @@ class State extends TransitionTarget
      */
     public function isValidChild(CompoundNode $child)
     {
-        return $child instanceof TransitionTarget;
+        return $child instanceof TransitionTarget ||
+                $child instanceof Transition;
     }
+
+
 }
