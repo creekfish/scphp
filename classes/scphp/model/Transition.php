@@ -29,11 +29,6 @@ class Transition extends CompoundNode
      */
     private $targets;
 
-    /**
-     * Parent target of this transition.
-     * @var TransitionTarget
-     */
-    private $parent;
 
     public function __construct()
     {
@@ -75,16 +70,6 @@ class Transition extends CompoundNode
     public function getCondition()
     {
         return $this->condition;
-    }
-
-    /**
-     * Get the parent target of this transition.
-     *
-     * @return TransitionTarget
-     */
-    public function getParent()
-    {
-        return $this->parent;
     }
 
     /**
@@ -176,25 +161,37 @@ class Transition extends CompoundNode
      * in document order.
      *
      * @return TransitionTarget target matching the given id
+     * @throws ModelException
      */
     public function getTarget($target_id)
     {
         if (in_array($target_id, $this->targets))
         {
-            $target = $this->getModel()->getTarget($target_id);
+            $model = $this->getModel();
+            if (!isset($model))
+            {
+                throw new ModelException("Model not specified for transition; cannot find target.");
+            }
+            $target = $model->getTarget($target_id);
             return $target;
         }
         throw new ModelException("Transition target '{$target_id}' not valid for transition.");
     }
 
     /**
-     * Set the parent target of this transition.
+     * Return the first target node for this transition (first in the list of target ids).
      *
-     * @param TransitionTarget $parent
+     * @return TransitionTarget The first target node | NULL if no targets
+     * @throws ModelException
      */
-    public function setParent(TransitionTarget $parent)
+    public function getFirstTarget()
     {
-        $this->parent = $parent;
+        if (isset($this->targets) && count($this->targets) > 0)
+        {
+            $first_array = array_slice($this->targets,0,1);
+            return $this->getTarget(array_shift($first_array));
+        }
+        return NULL;
     }
 
     /**

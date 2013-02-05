@@ -14,13 +14,16 @@ class Initial extends TransitionTarget
     }
 
     /**
-     * Add a transition to the list of transitions from this initial state.
+     * Add a transition to this initial element node, replacing
+     * any existing transition (only one transition is permitted).
      *
-     * @param Transition $transition - Transition to be added.
+     * @param Transition $transition Transition to be added.
      * @return void
+     * @throws ModelException
      */
     public function addTransition(Transition $transition)
     {
+        // validate the transition for an initial node
         if ($transition->getCondition() !== NULL)
         {
             throw new ModelException('Initial node transition cannot have condition.');
@@ -33,15 +36,21 @@ class Initial extends TransitionTarget
         {
             throw new ModelException('Initial node transition must specify a valid target.');
         }
-        if (count($transition->getChildren()) !== 0)
+
+        // remove any existing transition
+        $trans = $this->getFirstTransition();
+        if (isset($trans))
         {
-            throw new ModelException('Initial node transition cannot contain executable content.');
+            $this->removeTransition($trans);
         }
+
+        // add the specified transition
         parent::addTransition($transition);
     }
 
     /**
      * Return TRUE if the provided node is a valid parent node type for this node.
+     *
      * @param CompoundNode $parent
      * @return boolean
      */
@@ -54,6 +63,7 @@ class Initial extends TransitionTarget
 
     /**
      * Return TRUE if the provided node is a valid child node type for this node.
+     *
      * @param CompoundNode $child
      * @return boolean
      */

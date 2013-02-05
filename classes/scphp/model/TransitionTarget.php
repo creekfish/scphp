@@ -56,10 +56,10 @@ abstract class TransitionTarget extends CompoundNode
      * @see Transition
      * @see Condition
      *
-     * @param Event $event - Triggering event or NULL if all transitions should be returned.
-     * @return Transition[] - List of transitions that can be triggered by the the given event.
+     * @param Event $event Triggering event or NULL if all transitions should be returned.
+     * @return Transition[] List of transitions that can be triggered by the the given event.
      */
-    public function getTransitions(Event $event)
+    public function getTransitions($event)
     {
         if ($event === NULL) {
             // return all transitions
@@ -73,6 +73,22 @@ abstract class TransitionTarget extends CompoundNode
             }
         }
         return $events;
+    }
+
+
+    /**
+     * Return the first transition for this target.
+     *
+     * @return Transition The first transition | NULL if no transitions
+     */
+    public function getFirstTransition()
+    {
+        if (isset($this->transitions) && count($this->transitions) > 0)
+        {
+            $first_array = array_slice($this->transitions,0,1);
+            return array_shift($first_array);
+        }
+        return NULL;
     }
 
 }
