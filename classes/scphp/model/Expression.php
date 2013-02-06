@@ -16,9 +16,20 @@ class Expression
 
     /**
      * Evaluator for this expression.
-     * @var string
+     * @var \scphp\IEvaluator
      */
     private $evaluator;
+
+
+    /**
+     * Constructor
+     *
+     * @param string $text the text to be evaluated in the expression
+     */
+    public function __construct($text)
+    {
+        $this->text = $text;
+    }
 
     /**
      * Set the text of this expression.
@@ -35,7 +46,7 @@ class Expression
      *
      * @return string
      */
-    public function getName()
+    public function getText()
     {
         return $this->text;
     }

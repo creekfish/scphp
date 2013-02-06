@@ -31,20 +31,8 @@ abstract class TransitionTarget extends CompoundNode
      */
     public function addTransition(Transition $transition)
     {
-        $this->transitions[$transition->getDocumentOrder()] = $transition;
+        $this->transitions[] = $transition;
         $transition->setParent($this);
-    }
-
-    /**
-     * Remove a transition from the list of transitions from this target.
-     *
-     * @param Transition $transition - Transition to remove.
-     * @return void
-     */
-    public function removeTransition(Transition $transition)
-    {
-        unset($this->transitions[$transition->getDocumentOrder()]);
-        $transition->setParent(NULL);
     }
 
     /**
@@ -57,22 +45,23 @@ abstract class TransitionTarget extends CompoundNode
      * @see Condition
      *
      * @param Event $event Triggering event or NULL if all transitions should be returned.
-     * @return Transition[] List of transitions that can be triggered by the the given event.
+     * @return array of Transition List of transitions that can be triggered by the the given event.
      */
-    public function getTransitions($event)
+    public function getTransitions(Event $event = NULL)
     {
         if ($event === NULL) {
             // return all transitions
             return array_values($this->transitions);
         }
         $name = $event->getName();
-        $events = array();
+        $event_trans = array();
         foreach ($this->transitions as $transition) {
-            if ($transition->getEvent()->getName() === $name) {
-                $events[] = $transition;
+			$event = $transition->getEvent();
+            if (isset($event) && $event->getName() === $name) {
+                $event_trans[] = $transition;
             }
         }
-        return $events;
+        return $event_trans;
     }
 
 

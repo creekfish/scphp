@@ -1,5 +1,7 @@
 <?php
 
+use scphp\model\Condition;
+use scphp\model\Event;
 use scphp\model\Initial;
 use scphp\model\Log;
 use scphp\model\Scxml;
@@ -71,14 +73,14 @@ class StateTest extends PHPUnit_Framework_TestCase
         $kid2->addChild($grand3);
     }
 
-    public function testSimple()
+    public function testIsSimple()
     {
         $state = new State();
         $this->AssertTrue($state->isSimple());
         $this->AssertFalse($state->isComposite());
     }
 
-    public function testIsCompound()
+    public function testIsComposite()
     {
         $state = new State();
         $state->addChild(new State());
@@ -86,19 +88,76 @@ class StateTest extends PHPUnit_Framework_TestCase
         $this->AssertTrue($state->isComposite());
     }
 
-    public function testIsValidChild()
+    public function testIsFinal()
     {
-        $this->AssertTrue($this->sut->isValidChild(new Transition()));
-        $this->AssertTrue($this->sut->isValidChild(new State()));
-        $this->AssertFalse($this->sut->isValidChild(new Log()));
+        $state = new State();
+        $this->AssertTrue($state->isFinal());
     }
 
-    public function testIsValidParent()
+	public function testIsValidChild()
+	{
+		$this->AssertTrue($this->sut->isValidChild(new Transition()));
+		$this->AssertTrue($this->sut->isValidChild(new State()));
+		$this->AssertFalse($this->sut->isValidChild(new Log()));
+	}
+
+	public function testIsValidParent()
+	{
+		$this->AssertTrue($this->sut->isValidParent(new Scxml()));
+		$this->AssertTrue($this->sut->isValidParent(new State()));
+		$this->AssertFalse($this->sut->isValidParent(new Transition()));
+	}
+
+    // TransitionTarget
+
+    public function testGetFirstTransition()
     {
-        $this->AssertTrue($this->sut->isValidParent(new Scxml()));
-        $this->AssertTrue($this->sut->isValidParent(new State()));
-        $this->AssertFalse($this->sut->isValidParent(new Transition()));
+        $transition = new Transition($this->scxml->getChild('parent'), new Event('event1'), new Condition());
+        $transition2 = new Transition($this->scxml->getChild('uncle'), new Event('event2'));
+        $this->sut->addTransition($transition);
+        $this->sut->addTransition($transition2);
+        $this->assertEquals($transition, $this->sut->getFirstTransition());
     }
+
+    public function testGetAllTransitions()
+    {
+        $transition = new Transition($this->scxml->getChild('parent'), new Event('event1'), new Condition());
+        $transition2 = new Transition($this->scxml->getChild('uncle'), new Event('event2'));
+        $this->sut->addTransition($transition);
+        $this->sut->addTransition($transition2);
+        $this->assertEquals(array($transition, $transition2), $this->sut->getTransitions());
+    }
+
+    public function testGetTransitionByEvent()
+    {
+		$transition = new Transition($this->scxml->getChild('parent'), new Event('event1'), new Condition());
+		$transition2 = new Transition($this->scxml->getChild('uncle'), new Event('event2'));
+		$this->sut->addTransition($transition);
+		$this->sut->addTransition($transition2);
+		$this->assertEquals(array($transition2), $this->sut->getTransitions(new Event('event2')));
+    }
+
+	public function testGetMultipleTransitionsByEvent()
+	{
+		$transition = new Transition($this->scxml->getChild('parent'), new Event('event1'), new Condition());
+		$transition2 = new Transition($this->scxml->getChild('uncle'), new Event('event1'));
+		$this->sut->addTransition($transition);
+		$this->sut->addTransition(new Transition($this->scxml->getChild('uncle')));
+		$this->sut->addTransition(new Transition($this->sut, new Event('event2')));
+		$this->sut->addTransition($transition2);
+		$this->assertEquals(array($transition, $transition2), $this->sut->getTransitions(new Event('event1')));
+    }
+
+	public function testGetTransitionNoMatchEvent()
+	{
+		$transition = new Transition($this->scxml->getChild('parent'), new Event('event1'), new Condition());
+		$transition2 = new Transition($this->scxml->getChild('uncle'), new Event('event2'));
+		$this->sut->addTransition($transition);
+		$this->sut->addTransition($transition2);
+		$this->assertEquals(array(), $this->sut->getTransitions(new Event('event3')));
+    }
+
+	// CompoundNode
 
     public function testGetAncestors()
     {
@@ -151,7 +210,7 @@ class StateTest extends PHPUnit_Framework_TestCase
     public function testGetInitialDescendantsWithInitial()
     {
         $initial = new Initial();
-        $trans = new \scphp\model\Transition();
+        $trans = new Transition();
 
         // have to set up the model for the transition to lookup target by id
         $model = new \scphp\Model();
@@ -178,4 +237,34 @@ class StateTest extends PHPUnit_Framework_TestCase
         );
         $this->assertEquals($expected, $this->sut->getInitialDescendants());
     }
+
+    /**
+     * @expectedException \scphp\model\ModelException
+     * @expectedExceptionMessage Invalid id 'grand1' specified in initial attribute.
+     */
+    public function testSetBadInitialAttr()
+    {
+        $this->sut->setInitial('grand1');
+    }
+
+    /**
+     * @expectedException \scphp\model\ModelException
+     * @expectedExceptionMessage Cannot use initial attribute 'kid2' with initial child element.
+     */
+    public function testSetInitialAttrAfterInitialNode()
+    {
+        $this->sut->addChild(new Initial());
+        $this->sut->setInitial('kid2');
+    }
+
+    /**
+     * @expectedException \scphp\model\ModelException
+     * @expectedExceptionMessage Cannot use initial child element with initial attribute.
+     */
+    public function testSetInitialNodeAfterInitialAttr()
+    {
+        $this->sut->setInitial('kid2');
+        $this->sut->addChild(new Initial());
+    }
+
 }

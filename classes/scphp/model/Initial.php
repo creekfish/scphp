@@ -32,7 +32,7 @@ class Initial extends TransitionTarget
         {
             throw new ModelException('Initial node transition cannot have event.');
         }
-        if (count($transition->getTargets()) === 0)
+        if (count($transition->getTargetIds()) === 0)
         {
             throw new ModelException('Initial node transition must specify a valid target.');
         }

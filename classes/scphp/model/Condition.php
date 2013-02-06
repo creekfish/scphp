@@ -14,6 +14,17 @@ class Condition
      */
     private $expression;
 
+
+    /**
+     * Constructor
+     *
+     * @param Expression $expression expression for this condition
+     */
+    public function __construct(Expression $expression = NULL)
+    {
+        $this->expression = $expression;
+    }
+
     /**
      * Set the expression for this condition.
      *

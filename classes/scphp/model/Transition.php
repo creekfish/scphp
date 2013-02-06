@@ -27,14 +27,25 @@ class Transition extends CompoundNode
      * same parallel region.
      * @var array of string
      */
-    private $targets;
+    private $target_ids;
 
 
-    public function __construct()
+    /**
+     * Constructor
+     *
+     * @param string $target_id Single target id (default is NULL for no target)
+     * @param Event $event event Trigger for this transition
+     * @param Condition $condition Guard condition for this transition
+     */
+    public function __construct($target_id = NULL, Event $event = NULL, Condition $condition = NULL)
     {
-        $this->event = NULL;
-        $this->condition = NULL;
-        $this->targets = array();
+        $this->event = $event;
+        $this->condition = $condition;
+        $this->target_ids = array();
+        if (isset($target_id) && is_string($target_id))
+        {
+            $this->addTarget($target_id);
+        }
         parent::__construct();
     }
 
@@ -43,7 +54,7 @@ class Transition extends CompoundNode
      *
      * @see TransitionType
      *
-     * @return TransitionType - Type of transition.
+     * @return TransitionType Type of transition.
      */
     public function getType()
     {
@@ -55,7 +66,7 @@ class Transition extends CompoundNode
      * for the transition to be taken, the guard condition
      * must also be satisfied.
      *
-     * @return Event - The event or NULL if no trigger event
+     * @return Event The event or NULL if no trigger event
      */
     public function getEvent()
     {
@@ -65,7 +76,7 @@ class Transition extends CompoundNode
     /**
      * Get the guard condition (if any) for this transition.
      *
-     * @return Condition - The condition or NULL if no guard condition
+     * @return Condition The condition or NULL if no guard condition
      */
     public function getCondition()
     {
@@ -76,32 +87,32 @@ class Transition extends CompoundNode
      * Set the trigger event for this transition. Set to NULL
      * if there is no event.
      *
-     * @param string $event - Trigger event for this transition, or NULL
+     * @param string $event_name Trigger event name for this transition, or NULL
      */
-    public function setEvent($event)
+    public function setEvent($event_name)
     {
-        $this->event = new Event($event);
+        $this->event = new Event($event_name);
     }
 
     /**
      * Set the guard condition for this transition. Set to NULL
      * if there is no condition.
      *
-     * @param Condition $condition
+     * @param string $condition_expression_text Text of the expression for the guard condition
      */
-    public function setCondition(Condition $condition)
+    public function setCondition($condition_expression_text)
     {
-        $this->condition = $condition;
+        $this->condition = new Condition(new Expression($condition_expression_text));
     }
 
     /**
      * Set list of targets for this transition.
      *
-     * @param array of string $targets
+     * @param array of string $target_id_list
      */
-    public function setTargets(array $targets)
+    public function setTargets(array $target_id_list)
     {
-        $this->targets = $targets;
+        $this->target_ids = $target_id_list;
     }
 
     /**
@@ -117,44 +128,59 @@ class Transition extends CompoundNode
         {
             throw new ModelException('Transition target id must not be empty.');
         }
-        $this->targets[] = $target_id;
+        $this->target_ids[] = $target_id;
     }
 
     /**
      * Add a target or multiple targets (if in parallel region) for this transition
      * based on the "targets" attribute.
      *
-     * @param string $target id (or list of ids) of the target for this transition
+     * @param string $target_id Id (or list of ids) of the target for this transition
      * @return void
      * @throws ModelException
      */
-    public function setTarget($target)
+    public function setTarget($target_id)
     {
-        //todo Implement processing of multiple targets for parallel regions
-        if (empty($target))
+        if (empty($target_id))
         {
             throw new ModelException('Transition target attribute must not be empty.');
         }
-        if (!is_string($target))
+        if (!is_string($target_id))
         {
             throw new ModelException('Transition target attribute must be string.');
         }
-        foreach (explode(' ', $target) as $target_id)
+        foreach (explode(' ', $target_id) as $id)
         {
-            $this->addTarget($target_id);
+            $this->addTarget($id);
         }
     }
 
     /**
-     * Get list of targets for this transition (possibly none),
+     * Get list of target ids for this transition (possibly none),
      * in document order.
      *
-     * @return array of string - List of targets
+     * @return array of string List of target ids
      */
-    public function getTargets()
+    public function getTargetIds()
     {
-        return $this->targets;
+        return $this->target_ids;
     }
+
+	/**
+	 * Get list of targets for this transition (possibly none),
+	 * in document order.
+	 *
+	 * @return array of TransitionTarget List of targets
+	 */
+	public function getTargets()
+	{
+		$targets = array();
+		foreach ($this->getTargetIds() as $id)
+		{
+			$targets[] = $this->getTarget($id);
+		}
+		return $targets;
+	}
 
     /**
      * Get target for this transition,
@@ -165,7 +191,7 @@ class Transition extends CompoundNode
      */
     public function getTarget($target_id)
     {
-        if (in_array($target_id, $this->targets))
+        if (in_array($target_id, $this->target_ids))
         {
             $model = $this->getModel();
             if (!isset($model))
@@ -186,9 +212,9 @@ class Transition extends CompoundNode
      */
     public function getFirstTarget()
     {
-        if (isset($this->targets) && count($this->targets) > 0)
+        if (isset($this->target_ids) && count($this->target_ids) > 0)
         {
-            $first_array = array_slice($this->targets,0,1);
+            $first_array = array_slice($this->target_ids,0,1);
             return $this->getTarget(array_shift($first_array));
         }
         return NULL;
@@ -196,6 +222,7 @@ class Transition extends CompoundNode
 
     /**
      * Return TRUE if the provided node is a valid parent node type for this node.
+	 *
      * @param CompoundNode $parent
      * @return boolean
      */
@@ -208,6 +235,7 @@ class Transition extends CompoundNode
 
     /**
      * Return TRUE if the provided node is a valid child node type for this node.
+	 *
      * @param CompoundNode $child
      * @return boolean
      */
@@ -220,7 +248,7 @@ class Transition extends CompoundNode
     {
         $cond = ($this->getCondition() !== NULL) ? $this->getCondition()->getExpression() : 'NULL';
         $event = ($this->getEvent() !== NULL) ? $this->getEvent()->getName() : 'NULL';
-        $target_str = implode(',' , $this->getTargets());
+        $target_str = implode(',' , $this->getTargetIds());
         return parent::__toString() . '; event:' . $event . '; cond:' . $cond . '; targets:' . $target_str;
     }
 }

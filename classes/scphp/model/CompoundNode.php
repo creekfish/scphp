@@ -52,7 +52,7 @@ abstract class CompoundNode extends DocumentNode
 		if ($child instanceof Initial)
 		{
 			// initial sub-node specified by initial child element
-			if (isset($this->initial) && $this->initial instanceof Initial)
+			if (isset($this->initial) && !($this->initial instanceof Initial))
 			{
 				throw new ModelException("Cannot use initial child element with initial attribute.");
 			}
@@ -90,7 +90,11 @@ abstract class CompoundNode extends DocumentNode
 	 */
 	public function getChild($target_id)
 	{
-		return $this->children[$target_id];
+        if (array_key_exists($target_id, $this->children))
+        {
+		    return $this->children[$target_id];
+        }
+        return NULL;
 	}
 
 	/**
