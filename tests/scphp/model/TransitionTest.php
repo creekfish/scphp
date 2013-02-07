@@ -25,18 +25,18 @@ class TransitionTest extends PHPUnit_Framework_TestCase
     {
 		$do = 1;
 
-		$this->scxml = new Scxml();
-		$this->scxml->setDocumentOrder($do++);
+		$scxml = new Scxml();
+		$scxml->setDocumentOrder($do++);
 
 		$parent = new State();
 		$parent->setDocumentOrder($do++);
 		$parent->setId('parent');
-		$this->scxml->addChild($parent);
+		$scxml->addChild($parent);
 
 		$uncle = new State();
 		$uncle->setDocumentOrder($do++);
 		$uncle->setId('uncle');
-		$this->scxml->addChild($uncle);
+		$scxml->addChild($uncle);
 
 		$child = new State();
 		$child->setDocumentOrder($do++);

@@ -9,9 +9,9 @@ namespace scphp\model;
 class FinalState extends TransitionTarget
 {
 
-    public function addTransition($transition)
+    public function addTransition(Transition $transition)
     {
-        throw ModelException('Cannot add transition to Final');
+        throw new ModelException('Cannot add transition to Final');
     }
 
     /**

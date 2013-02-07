@@ -7,7 +7,8 @@ use scphp\model\Event;
 use scphp\model\Scxml;
 use scphp\model\Transition;
 use scphp\model\TransitionTarget;
-use \scphp\model\ModelValidationException;
+use scphp\model\ModelException;
+use scphp\model\ModelValidationException;
 
 /**
  *
@@ -48,6 +49,7 @@ class Model
      * @param model\CompoundNode $node
      * @param model\CompoundNode $parent
      * @return void
+	 * @throws ModelException
      */
     public function addNode(CompoundNode $node, CompoundNode $parent = NULL)
     {
@@ -62,8 +64,11 @@ class Model
         {
             $this->addTransition($node);
         }
-        if ($parent === NULL)
+        if ($node instanceof Scxml)
         {
+			if ($parent !== NULL) {
+				throw new ModelException('SCXML node cannot have parent node.');
+			}
             // this is the "parent" for the SCXML doc node
             $this->scxml = $node;
         }
@@ -89,6 +94,16 @@ class Model
         }
         $this->targets[$idx] = $target;
     }
+
+	/**
+	 * Return the root Scxml node for this model.
+	 *
+	 * @return Scxml
+	 */
+	public function getScxml()
+	{
+		return $this->scxml;
+	}
 
     /**
      * Return a list of all TransitionTargets for this model.
@@ -130,10 +145,29 @@ class Model
         return $this->transitions[$event_key];
     }
 
+	/**
+	 * Return a list of all Transitions in this model.
+	 *
+	 * @return array of Transition
+	 */
+	public function getAllTransitions()
+	{
+		$ret = array();
+		foreach ($this->getTriggers() as $trigger)
+		{
+			foreach ($this->transitions[$trigger] as $transition)
+			{
+				$ret[] = $transition;
+			}
+		}
+		return $ret;
+	}
+
     /**
      * Return a list of all event names that can trigger
      * transitions in this model.
-     * NOTE: NULL is a valid event name
+     * NOTE: NULL and "" are valid event names
+	 * NOTE: ordering of list is indeterminate
      *
      * @return array of string
      */
@@ -151,7 +185,11 @@ class Model
      */
     public function getTarget($target_id)
     {
-        return $this->targets[$target_id];
+		if (array_key_exists($target_id, $this->targets))
+		{
+			return $this->targets[$target_id];
+		}
+		return NULL;
     }
 
     /**
@@ -184,31 +222,41 @@ class Model
      * Throw exception if any transitions specify targets
      * that do not exist in the model.
      *
+	 * @return void
      * @throws model\ModelValidationException
     */
     public function validateTargets()
     {
         $valid_targets = array_keys($this->getTargets());
+
         // validate that all transitions target valid nodes in the model
         foreach ($this->transitions as $transition_list)
         {
             foreach ($transition_list as $transition)
             {
                 $transition_event = $transition->getEvent();
-                foreach ($transition->getTargets() as $target)
-                {
-                    if ($target !== NULL && !in_array($target, $valid_targets))
-                    {
-                        throw new ModelValidationException(
-                                "Invalid target '{$target}' for " .
-                                "transition with event '{$transition_event}'"
-                        );
-                    }
-                }
+				try
+				{
+					foreach ($transition->getTargets() as $target)
+					{
+						if ($target !== NULL && !in_array($target->getId(), $valid_targets))
+						{
+							throw new ModelValidationException(
+									"Invalid target '{$target}' for " .
+									"transition with event '{$transition_event}'"
+							);
+						}
+					}
+				}
+				catch (ModelException $e)
+				{
+					throw new ModelValidationException(
+						"Invalid target for " .
+							"transition with event '{$transition_event}'. " . $e->getMessage()
+					);
+				}
             }
         }
-
-
     }
 
     public function __toString()

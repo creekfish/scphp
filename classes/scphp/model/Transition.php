@@ -199,6 +199,10 @@ class Transition extends CompoundNode
                 throw new ModelException("Model not specified for transition; cannot find target.");
             }
             $target = $model->getTarget($target_id);
+			if (!isset($target))
+			{
+				throw new ModelException("Transition target '{$target_id}' does not exist in model.");
+			}
             return $target;
         }
         throw new ModelException("Transition target '{$target_id}' not valid for transition.");
