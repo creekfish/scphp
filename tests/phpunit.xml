@@ -1,6 +1,12 @@
 <phpunit backupGlobals="false"
          bootstrap="bootstrap.php"
-         backupStaticAttributes="true"
+        timeoutForSmallTests="300"
+        timeoutForMediumTests="300"
+        timeoutForLargeTests="300"
+	strict="true">
+
+<!--         
+	backupStaticAttributes="true"
          colors="false"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
@@ -8,5 +14,12 @@
          processIsolation="true"
          stopOnFailure="true"
          syntaxCheck="false"
-         testSuiteLoaderClass="PHPUnit_Runner_StandardTestSuiteLoader">
+         testSuiteLoaderClass="PHPUnit_Runner_StandardTestSuiteLoader"
+-->
+
+    <testsuites>
+        <testsuite name="ECash Unit Tests">
+            <directory>.</directory>
+        </testsuite>
+    </testsuites>
 </phpunit>

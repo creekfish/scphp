@@ -145,16 +145,33 @@ class ModelTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($this->sut->isTarget('state2'));
 	}
 
-	public function testValidateModel()
+	public function testValidateModelOK()
 	{
+		$this->setupFixureModel();
+		try {
+			$this->assertNull($this->sut->validateModel());
+		} catch (\scphp\model\ModelValidationException $not_expected) {
+			$this->fail('Unexpected ModelValidationException thrown: ' . $not_expected->getMessage());
+		}
+	}
 
+	/**
+	 * @expectedException \scphp\model\ModelValidationException
+	 * @expectedExceptionMessage Invalid target for transition with event 'abc'. Transition target 'state4' does not exist in model.
+	 */
+	public function testValidateModelFailTarget()
+	{
+		$node = $this->setupFixureModel();
+		$transition6 = new Transition('state4', new Event('abc'));
+		$this->sut->addNode($transition6, $node['state1']);
+		$this->sut->validateTargets();
 	}
 
 	public function testValidateTargetsOK()
 	{
 		$this->setupFixureModel();
 		try {
-			$this->sut->validateTargets();
+			$this->assertNull($this->sut->validateTargets());
 		} catch (\scphp\model\ModelValidationException $not_expected) {
 			$this->fail('Unexpected ModelValidationException thrown: ' . $not_expected->getMessage());
 		}
