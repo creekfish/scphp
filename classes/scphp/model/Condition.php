@@ -44,4 +44,20 @@ class Condition
     {
         return $this->expression;
     }
+
+	/**
+	 * Return TRUE if this condition evaluates to true (using the
+	 * given evaluator).
+	 *
+	 * @return boolean
+	 */
+	public function isTrue()
+	{
+		if (empty($this->expression))
+		{
+//TODO check this assumption against the spec (if empty expression string, return true)
+			return TRUE;
+		}
+		return $this->expression->evaluate();
+	}
 }

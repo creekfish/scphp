@@ -3,7 +3,9 @@
 namespace scphp\model;
 
 /**
- * Base class for all Executable Content SCXML document nodes.
+ * Base class for all "executable content" nodes.
+ *
+ * @see ExecutableNodeContainer
  *
  * @author bherring
  */
@@ -34,4 +36,30 @@ abstract class ExecutableNode extends CompoundNode
 //            Collection $derivedEvents);
 
     abstract public function execute($logger);
+
+
+	/**
+	 * Return TRUE if the provided node is a valid parent node type for this node.
+	 *
+	 * @param CompoundNode $parent
+	 * @return boolean
+	 */
+	public function isValidParent(CompoundNode $parent)
+	{
+		return ($parent instanceof ExecutableNodeContainer);
+	}
+
+	/**
+	 * Return TRUE if the provided node is a valid child node type for this node.
+	 * NOTE: Executable node has no children by default, subclass must override to allow
+	 * child nodes.
+	 *
+	 * @param CompoundNode $child
+	 * @return boolean
+	 */
+	public function isValidChild(CompoundNode $child)
+	{
+		return FALSE;
+	}
+
 }

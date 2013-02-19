@@ -4,11 +4,38 @@
     <state id="first">
         <transition event="one" target="second" />
     </state>
-    <state id="second">
+    <state id="second" initial="other">
         <transition event="two" target="first" />
         <state id="sub_second">
             <transition event="three" target="first">
             </transition>
         </state>
+		<state id="other">
+			<transition event="four" target="first" />
+			<transition event="five" target="sub_second" />
+		</state>
     </state>
- </scxml>
+	<state id="third" initial="parallel">
+		<state id="sub_third">
+		</state>
+		<parallel id="parallel">
+			<transition event="pout" target="first" />
+			<state id="pkid1">
+				<transition event="five" target="second" />
+			</state>
+			<state id="pkid2" initial="pgrand2">
+				<state id="pgrand1">
+					<transition event="six" target="first" />
+				</state>
+				<state id="pgrand2">
+				</state>
+			</state>
+			<state id="pkid3">
+				<state id="pgrand3">
+				</state>
+				<state id="pgrand4">
+				</state>
+			</state>
+		</parallel>
+	</state>
+</scxml>

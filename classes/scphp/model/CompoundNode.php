@@ -23,18 +23,11 @@ abstract class CompoundNode extends DocumentNode
 	 */
 	private $parent;
 
-	/**
-	 * The initial child "substate" of this node.
-	 * @var CompoundNode
-	 */
-	private $initial;
-
 
 	public function __construct()
 	{
 		$this->children = array();
 		$this->parent = NULL;
-		$this->initial = NULL;
 		parent::__construct();
 	}
 
@@ -49,26 +42,14 @@ abstract class CompoundNode extends DocumentNode
 		{
 			throw new ModelException(get_class($child) . ' is not a valid child type for ' . get_class($this));
 		}
-		if ($child instanceof Initial)
+		// add child node with id (if any) as index
+		$idx = $child->getId();
+		if (empty($idx))
 		{
-			// initial sub-node specified by initial child element
-			if (isset($this->initial) && !($this->initial instanceof Initial))
-			{
-				throw new ModelException("Cannot use initial child element with initial attribute.");
-			}
-			$this->initial = $child;
+			// ensure valid index for child node without id
+			$idx = '__NID__' . count($this->children);
 		}
-		else
-		{
-			// add child node with id (if any) as index
-			$idx = $child->getId();
-			if (empty($idx))
-			{
-				// ensure valid index for child node without id
-				$idx = '__NID__' . count($this->children);
-			}
-			$this->children[$idx] = $child;
-		}
+		$this->children[$idx] = $child;
 		$child->setParent($this);
 	}
 
@@ -121,76 +102,6 @@ abstract class CompoundNode extends DocumentNode
 		$this->parent = $parent;
 	}
 
-	/**
-	 * Get the initial element of this node
-     * (either the initial element or NULL).
-     * To get the initial child node, use getInitialChild()
-	 *
-	 * @return CompoundNode
-	 */
-	public function getInitial()
-	{
-		if ($this->initial instanceof Initial)
-        {
-            return $this->initial;
-        }
-        return NULL;
-	}
-
-	/**
-	 * Set the initial child node of this node from
-	 * the id specified in the initial attribute value.
-	 *
-	 * @param string $initial_attr_value
-	 */
-	public function setInitial($initial_attr_value)
-	{
-		$initial = $this->getChild($initial_attr_value);
-		if (isset($initial))
-		{
-			if (isset($this->initial) && $this->initial instanceof Initial)
-			{
-				throw new ModelException("Cannot use initial attribute '{$initial_attr_value}' with initial child element.");
-			}
-			$this->initial = $initial;
-		}
-		else
-		{
-			throw new ModelException("Invalid id '{$initial_attr_value}' specified in initial attribute.");
-		}
-	}
-
-	/**
-	 * Get the initial child node of this node.
-	 *
-	 * @return CompoundNode
-	 */
-	public function getInitialChild()
-	{
-		$initial = $this->initial;
-
-		if (!isset($initial))
-		{
-            // default initial node is the first child node
-            return $this->getFirstChild();
-        }
-
-        if ($initial instanceof Initial)
-        {
-            // follow the initial element's transition to the initial child
-            $transition = $initial->getFirstTransition();
-            if (isset($transition))
-            {
-                return $transition->getFirstTarget();
-            }
-            // initial node has a bad transition
-            return NULL;
-        }
-
-        // initial child specified by initial attribute of this compound node
-        return $initial;
-	}
-
     /**
      * Return the first child node of this node (first in document order).
      *
@@ -233,36 +144,24 @@ abstract class CompoundNode extends DocumentNode
 	}
 
 	/**
-	 * Return a list of ancestor nodes of this node in document order.
+	 * Return TRUE if this is a simple node (a leaf)
 	 *
-	 * @param bool $reverse_doc_order return list in reverse document order
-	 *      if TRUE (default is FALSE)
-	 * @return array of State
+	 * @return boolean
 	 */
-	public function getInitialDescendants($reverse_doc_order = FALSE)
+	public function isSimple()
 	{
-		$ret = array();
-		$node = $this->getInitialChild();
-		while ($node !== NULL)
-		{
-			if ($reverse_doc_order)
-			{
-				array_unshift($ret, $node);
-			}
-			else
-			{
-				array_push($ret, $node);
-			}
-			$node = $node->getInitialChild();
-		}
-		return $ret;
+		return count($this->getChildren()) == 0;
 	}
 
-    public function __toString()
-    {
-        $init = $this->getInitialChild();
-        return parent::__toString() . '; intitial:' . ((isset($init)) ? $init->getId() : 'N/A');
-    }
+	/**
+	 * Return TRUE if this is a composite node (a non-leaf, has child states)
+	 *
+	 * @return boolean
+	 */
+	public function isComposite()
+	{
+		return count($this->getChildren()) > 0;
+	}
 
 	/**
 	 * Return TRUE if the provided node is a valid child node type for this node.

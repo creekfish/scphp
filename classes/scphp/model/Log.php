@@ -47,4 +47,16 @@ class Log extends ExecutableNode
         return FALSE;
     }
 
+	/**
+	 * Validate this document node (e.g. against the SCXML standard).
+	 * Only has meaning once the model if fully parsed and
+	 * all nodes are created.
+	 *
+	 * @return boolean TRUE if validation passes, otherwise FALSE
+	 * @throws \scphp\model\ModelValidationException
+	 */
+	public function validate()
+	{
+		return TRUE;
+	}
 }

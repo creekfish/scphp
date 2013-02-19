@@ -6,14 +6,15 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class Transition extends CompoundNode
+class Transition extends ExecutableNodeContainer
 {
+	const EVENT_DESCRIPTOR_SEPARATOR = ' ';
 
     /**
-     * Triggering event for this transition (if any).
-     * @var Event
+     * Triggering event(s) for this transition (if any).
+     * @var array of Event
      */
-    private $event;
+    private $events;
 
     /**
      * Guard condition for this transition (if any).
@@ -29,17 +30,22 @@ class Transition extends CompoundNode
      */
     private $target_ids;
 
+	/**
+	 * The event attribute string for the transition element.
+	 * @var string
+	 */
+	private $event_attribute;
 
     /**
      * Constructor
      *
      * @param string $target_id Single target id (default is NULL for no target)
-     * @param Event $event event Trigger for this transition
-     * @param Condition $condition Guard condition for this transition
+     * @param string $event_attribute Event attribute for this transition node or NULL if no events
+     * @param Condition $condition Guard condition for this transition or NULL if no conition
      */
-    public function __construct($target_id = NULL, Event $event = NULL, Condition $condition = NULL)
+    public function __construct($target_id = NULL, $event_attribute = NULL, Condition $condition = NULL)
     {
-        $this->event = $event;
+		$this->setEvent($event_attribute);
         $this->condition = $condition;
         $this->target_ids = array();
         if (isset($target_id) && is_string($target_id))
@@ -62,16 +68,25 @@ class Transition extends CompoundNode
     }
 
     /**
-     * Get the trigger event for this transition (if any).  Note that
+     * Get the triggering events for this transition (if any).  Note that
      * for the transition to be taken, the guard condition
      * must also be satisfied.
      *
-     * @return Event The event or NULL if no trigger event
+     * @return array of Event The events or empty array if no triggering events
      */
-    public function getEvent()
+    public function getEvents()
     {
-        return $this->event;
+        return $this->events;
     }
+
+	/**
+	 * Get the event attribute string for this event.
+	 * @return string
+	 */
+	public function getEventAttribute()
+	{
+		return $this->event_attribute;
+	}
 
     /**
      * Get the guard condition (if any) for this transition.
@@ -84,14 +99,24 @@ class Transition extends CompoundNode
     }
 
     /**
-     * Set the trigger event for this transition. Set to NULL
-     * if there is no event.
+     * Set the trigger events for this transition, based on the
+	 * event attribute in the transition node.
      *
-     * @param string $event_name Trigger event name for this transition, or NULL
+     * @param string $event_attribute Trigger event attribute for this transition, or NULL if no event attribute
      */
-    public function setEvent($event_name)
+    public function setEvent($event_attribute)
     {
-        $this->event = new Event($event_name);
+		if (empty($event_attribute))
+		{
+			$this->event_attribute = NULL;
+			$this->events = array();
+			return;
+		}
+		$this->event_attribute = $event_attribute;
+		foreach (explode(self::EVENT_DESCRIPTOR_SEPARATOR, $event_attribute) as $descriptor)
+		{
+			$this->events[] = new Event($descriptor);
+		}
     }
 
     /**
@@ -104,6 +129,67 @@ class Transition extends CompoundNode
     {
         $this->condition = new Condition(new Expression($condition_expression_text));
     }
+
+	/**
+	 * Return true if this transition is enabled by the given event.
+	 * See http://www.w3.org/TR/scxml/#SelectingTransitions (section 3.13)
+	 * for more info.
+	 *
+	 * @param Event $match_event The event this transitions event(s) must match to be enabled
+	 * @return boolean
+	 */
+	public function isEnabledByEvent(Event $match_event)
+	{
+		if ($this->isTriggeredByEvent($match_event))  // if event can trigger (is a match)
+		{
+			// also must either not have condition or condition evaluates to true
+			if (empty($this->condition) || $this->condition->isTrue())
+			{
+				return TRUE;
+			}
+		}
+		return FALSE;
+	}
+
+	/**
+	 * Return true if this transition can be triggered by the given event.
+	 * Does not consider the guard condition, which, if it evaluates to
+	 * FALSE may still cause the transtion not the be enabled in the
+	 * current configuration.
+	 * See http://www.w3.org/TR/scxml/#SelectingTransitions (section 3.13)
+	 * for more info.
+	 *
+	 * @see isEnabledByEvent
+	 *
+	 * @param Event $match_event The event this transitions event(s) must match to be enabled, or NULL if match
+	 * 			transition with no event.
+	 * @return boolean
+	 */
+	public function isTriggeredByEvent(Event $match_event)
+	{
+		$matches = FALSE;
+		if (!empty($this->events))
+		{
+			// must match the event name
+			/** @var Event $my_event */
+			foreach ($this->events as $my_event)
+			{
+				if ($my_event->matches($match_event))
+				{
+					$matches = TRUE;
+					break;
+				}
+			}
+		}
+		else
+		{
+			if ($match_event === NULL)
+			{
+				$matches = TRUE;  // no event attribute specified, depends only on condition
+			}
+		}
+		return $matches;
+	}
 
     /**
      * Set list of targets for this transition.
@@ -183,10 +269,10 @@ class Transition extends CompoundNode
 	}
 
     /**
-     * Get target for this transition,
-     * in document order.
+     * Get target for this transition that matches the given id.
      *
-     * @return TransitionTarget target matching the given id
+	 * @param string $target_id
+     * @return TransitionContainer Target matching the given id || NULL if no target matches
      * @throws ModelException
      */
     public function getTarget($target_id)
@@ -211,7 +297,7 @@ class Transition extends CompoundNode
     /**
      * Return the first target node for this transition (first in the list of target ids).
      *
-     * @return TransitionTarget The first target node | NULL if no targets
+     * @return TransitionContainer The first target node | NULL if no targets
      * @throws ModelException
      */
     public function getFirstTarget()
@@ -224,35 +310,35 @@ class Transition extends CompoundNode
         return NULL;
     }
 
-    /**
-     * Return TRUE if the provided node is a valid parent node type for this node.
+	/**
+	 * Return TRUE if the provided node is a valid parent node type for this node.
 	 *
-     * @param CompoundNode $parent
-     * @return boolean
-     */
-    public function isValidParent(CompoundNode $parent)
-    {
-        return ($parent instanceof TransitionTarget ||
-            $parent instanceof Scxml
-        );
-    }
-
-    /**
-     * Return TRUE if the provided node is a valid child node type for this node.
-	 *
-     * @param CompoundNode $child
-     * @return boolean
-     */
-    public function isValidChild(CompoundNode $child)
-    {
-        return $child instanceof ExecutableNode;
-    }
+	 * @param CompoundNode $parent
+	 * @return boolean
+	 */
+	public function isValidParent(CompoundNode $parent)
+	{
+		return ($parent instanceof TransitionContainer);
+	}
 
     public function __toString()
     {
         $cond = ($this->getCondition() !== NULL) ? $this->getCondition()->getExpression() : 'NULL';
-        $event = ($this->getEvent() !== NULL) ? $this->getEvent()->getName() : 'NULL';
+        $event = ($this->getEventAttribute() !== NULL) ? $this->getEventAttribute() : 'NULL';
         $target_str = implode(',' , $this->getTargetIds());
         return parent::__toString() . '; event:' . $event . '; cond:' . $cond . '; targets:' . $target_str;
     }
+
+	/**
+	 * Validate this document node (e.g. against the SCXML standard).
+	 * Only has meaning once the model if fully parsed and
+	 * all nodes are created.
+	 *
+	 * @return boolean TRUE if validation passes, otherwise FALSE
+	 * @throws \scphp\model\ModelValidationException
+	 */
+	public function validate()
+	{
+		return TRUE;
+	}
 }

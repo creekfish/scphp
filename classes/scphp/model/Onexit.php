@@ -8,7 +8,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class Onexit extends CompoundTarget
+class Onexit extends CompoundNode
 {
     /**
      * Return TRUE if the provided node is a valid parent node type for this node.
@@ -17,7 +17,7 @@ class Onexit extends CompoundTarget
      */
     public function isValidParent(CompoundNode $parent)
     {
-        return $parent instanceof TransitionTarget;
+        return $parent instanceof TransitionContainer;
     }
 
     /**
@@ -29,4 +29,17 @@ class Onexit extends CompoundTarget
     {
         return $child instanceof ExecutableNode;
     }
+
+	/**
+	 * Validate this document node (e.g. against the SCXML standard).
+	 * Only has meaning once the model if fully parsed and
+	 * all nodes are created.
+	 *
+	 * @return boolean TRUE if validation passes, otherwise FALSE
+	 * @throws \scphp\model\ModelValidationException
+	 */
+	public function validate()
+	{
+		return TRUE;
+	}
 }

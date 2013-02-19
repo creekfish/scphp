@@ -2,6 +2,9 @@
 
 namespace scphp\model;
 
+use scphp\Model;
+use scphp\model\ModelValidationException;
+
 /**
  * Base class for all SCXML document nodes.
  *
@@ -23,7 +26,7 @@ abstract class DocumentNode
 
     /**
      * The SCPHP model for this node.
-     * @var \scphp\Model
+     * @var Model
      */
     private $model;
 
@@ -34,7 +37,17 @@ abstract class DocumentNode
         $this->id = NULL;
     }
 
-    /**
+	/**
+	 * Validate this document node (e.g. against the SCXML standard).
+	 * Only has meaning once the model if fully parsed and
+	 * all nodes are created.
+	 *
+	 * @return boolean TRUE if validation passes, otherwise FALSE
+	 * @throws ModelValidationException
+	 */
+	abstract public function validate();
+
+	/**
      * Return the document order number for this node.
      * This value must be the absolute document ordering,
      * a unique number for every node in the document.

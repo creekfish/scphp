@@ -6,7 +6,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class Initial extends TransitionTarget
+class Initial extends TransitionContainer
 {
     public function __construct()
     {
@@ -28,7 +28,8 @@ class Initial extends TransitionTarget
         {
             throw new ModelException('Initial node transition cannot have condition.');
         }
-        if ($transition->getEvent() !== NULL)
+		$events = $transition->getEvents();
+        if (!empty($events))
         {
             throw new ModelException('Initial node transition cannot have event.');
         }
@@ -56,7 +57,7 @@ class Initial extends TransitionTarget
      */
     public function isValidParent(CompoundNode $parent)
     {
-        return ($parent instanceof TransitionTarget ||
+        return ($parent instanceof TransitionContainer ||
                 $parent instanceof Scxml
         );
     }
@@ -71,4 +72,17 @@ class Initial extends TransitionTarget
     {
         return $child instanceof Transition;
     }
+
+	/**
+	 * Validate this document node (e.g. against the SCXML standard).
+	 * Only has meaning once the model if fully parsed and
+	 * all nodes are created.
+	 *
+	 * @return boolean TRUE if validation passes, otherwise FALSE
+	 * @throws \scphp\model\ModelValidationException
+	 */
+	public function validate()
+	{
+		return TRUE;
+	}
 }

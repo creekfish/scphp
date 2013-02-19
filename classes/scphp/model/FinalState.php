@@ -6,7 +6,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class FinalState extends TransitionTarget
+class FinalState extends TransitionContainer
 {
 
     public function addTransition(Transition $transition)
@@ -21,7 +21,8 @@ class FinalState extends TransitionTarget
      */
     public function isValidParent(CompoundNode $parent)
     {
-        return ($parent instanceof TransitionTarget ||
+        return (
+			$parent instanceof State ||
             $parent instanceof Scxml
         );
     }
@@ -35,4 +36,17 @@ class FinalState extends TransitionTarget
     {
         return FALSE;
     }
+
+	/**
+	 * Validate this document node (e.g. against the SCXML standard).
+	 * Only has meaning once the model if fully parsed and
+	 * all nodes are created.
+	 *
+	 * @return boolean TRUE if validation passes, otherwise FALSE
+	 * @throws \scphp\model\ModelValidationException
+	 */
+	public function validate()
+	{
+		return TRUE;
+	}
 }

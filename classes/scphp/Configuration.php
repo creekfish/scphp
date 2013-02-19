@@ -2,6 +2,13 @@
 
 namespace scphp;
 
+use scphp\model\Event;
+use scphp\model\Parallel;
+use scphp\model\State;
+use scphp\model\Transition;
+use scphp\model\TransitionTarget;
+
+
 /**
  * A set of active states (generally the current set).
  * This class enforces requirements of a legal configuration:
@@ -19,10 +26,11 @@ namespace scphp;
 class Configuration
 {
     /**
-     * Array of states for this configuration, indexed by doc order num
-     * to ensure states are not duplicated.
+     * Array of states (both "regular" and parallel) in this
+	 * configuration, indexed by doc order num to ensure states
+	 * are not duplicated.
      *
-     * @var array of model\State
+     * @var array of TransitionTarget
      */
     private $states;
 
@@ -30,14 +38,19 @@ class Configuration
 	 * Array of atomic states for this configuration, indexed by doc order num
 	 * to ensure states are not duplicated.
 	 *
-	 * @var array of model\State
+	 * @var array of States
 	 */
 	private $atomic_states;
 
-
+	/**
+	 * Sorted list of document order keys for states.
+	 *
+	 * @var array of int
+	 */
 	private $states_doc_order;
 
-    public function addState(model\State $state)
+
+    public function addState(TransitionTarget $state)
     {
 		if (array_key_exists($state->getDocumentOrder(), $this->states))
 		{
@@ -70,29 +83,49 @@ class Configuration
             $this->states[$state->getDocumentOrder()] = $ancestor;
         }
 
-        if ($state->isComposite())
-        {
-			/** @var model\State $last_descendant  */
-			$last_descendant = NULL;
-            // add all descendant states to this configuration
-            foreach ($state->getIntialDescendants() as $descendant)
-            {
-                $this->states[$state->getDocumentOrder()] = $descendant;
-				$last_descendant = $descendant;
-            }
-			if ($last_descendant !== NULL)
-			{
-				$this->atomic_states[$last_descendant->getDocumentOrder()] = $last_descendant;
-			}
-        }
-		else
-		{
-			$this->atomic_states[$state->getDocumentOrder()] = $state;
-		}
+		// add all initial descendant states to the configuration
+		// (those entered upon entering the state, without following any transitions)
+		$this->states = $this->states + $state->getInitialDescendants();  // array union
 
 		// rebuild the cached sorted doc order keys list
 		$this->states_doc_order = sort(array_keys($this->states));
     }
+
+	private function addDescendantsRecursive(TransitionTarget $state)
+	{
+		if ($state instanceof State)
+		{
+			if ($state->isComposite())
+			{
+				/** @var model\State $last_descendant  */
+				$last_descendant = NULL;
+				// add all descendant states to this configuration
+				foreach ($state->getIntialDescendants() as $descendant)
+				{
+					$this->states[$state->getDocumentOrder()] = $descendant;
+					$last_descendant = $descendant;
+				}
+				if ($last_descendant !== NULL)
+				{
+					$this->atomic_states[$last_descendant->getDocumentOrder()] = $last_descendant;
+				}
+			}
+			else
+			{
+				$this->atomic_states[$state->getDocumentOrder()] = $state;
+			}
+		}
+		else if ($state instanceof Parallel)
+		{
+			// add all parallel child states to the configuration
+			foreach ($state->getTargetChildren() as $child)
+			{
+				// add child to the configuration
+				$this->states[$state->getDocumentOrder()] = $child;
+				$this->addDescendantsRecursive($child);
+			}
+		}
+	}
 
     /**
      * Select transitions from this configuration
@@ -100,13 +133,28 @@ class Configuration
      * event.
      *
      * @param model\Event $event
-     * @return array of model\Transition $transition
+     * @return array of Transition $transition
      */
-    public function selectTransitions(model\Event $event)
+    public function selectTransitions(Event $event)
     {
+		$selected = array();
 
+		/** @var State $state */
+		foreach ($this->states as $state)  // all active states in this configuration
+		{
+			/** @var Transition $transition */
+			foreach ($state->getTransitions() as $transition)
+			{
+				if ($transition->isEnabledByEvent($event))
+				{
+					$selected[$transition->getDocumentOrder()] = $transition;
+					// select only first (in document order) enabled transition for this state
+					break;
+				}
+			}
+		}
+		return $selected;
     }
-
 
     /**
      * Enter all states in this configuration.

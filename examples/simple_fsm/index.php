@@ -5,28 +5,44 @@ use scphp\io\Parser;
 
 include_once('../../AutoLoader.php');
 
-//$t = new scphp\model\TransitionList();
-//
-//$t[2] = new scphp\model\Transition();
-//$t[2]->setEvent(new \scphp\model\Event('event1'));
-//$t[4] = new scphp\model\Transition();
-//$t[4]->setEvent(new \scphp\model\Event('event2'));
-//$t[5] = new scphp\model\Transition();
-//$t[5]->setEvent(new \scphp\model\Event('event3'));
-//$t[5] = new scphp\model\Log();
-////$t[5]->setEvent(new \scphp\model\Event('event3'));
-//
-//foreach ($t as $tran)
-//{
-//    echo $tran->getEvent()->getName() . PHP_EOL;
-//}
-//exit;
+/**
+ *
+ *
+ *
+ *
+ * Also should make two SCXML things:
+ *
+ * 1) SCXMLint - scan SCXML for good technique, beyond validation
+ * 2) SCXML Javascript based editor (HTML5 and CSS3 too!)
+ *
+ *
+ *
+ *
+ * 
+ */
+
 
 $parser = new Parser();
 
 $xml = file_get_contents('simple.scxml');
 $model = $parser->parse($xml);
 $model->validateModel();
+
+$descendants = $model->getTarget('second')->getInitialDescendants();
+foreach ($descendants as $desc)
+{
+	echo (string) $desc . PHP_EOL;
+}
+
+echo "\n";
+
+$descendants = $model->getTarget('third')->getInitialDescendants();
+foreach ($descendants as $desc)
+{
+	echo (string) $desc . PHP_EOL;
+}
+
+echo "\n";
 
 echo (string) $model;
 

@@ -22,6 +22,5 @@ final class TransitionType
 
     private function __construct()
     {
-
     }
 }

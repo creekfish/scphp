@@ -4,7 +4,9 @@ use scphp\Model;
 use scphp\model\Event;
 use scphp\model\Condition;
 use scphp\model\Expression;
+use scphp\model\Initial;
 use scphp\model\Log;
+use scphp\model\Parallel;
 use scphp\model\Scxml;
 use scphp\model\State;
 use scphp\model\Transition;
@@ -23,25 +25,23 @@ class TransitionTest extends PHPUnit_Framework_TestCase
 
     public function setup()
     {
-		$do = 1;
-
 		$scxml = new Scxml();
-		$scxml->setDocumentOrder($do++);
+		$scxml->setDocumentOrder(1);
 
-		$parent = new State();
-		$parent->setDocumentOrder($do++);
-		$parent->setId('parent');
-		$scxml->addChild($parent);
+			$parent = new State();
+			$parent->setDocumentOrder(2);
+			$parent->setId('parent');
+			$scxml->addChild($parent);
 
-		$uncle = new State();
-		$uncle->setDocumentOrder($do++);
-		$uncle->setId('uncle');
-		$scxml->addChild($uncle);
+				$child = new State();
+				$child->setDocumentOrder(3);
+				$child->setId('child');
+				$parent->addChild($child);
 
-		$child = new State();
-		$child->setDocumentOrder($do++);
-		$child->setId('child');
-		$parent->addChild($child);
+			$uncle = new State();
+			$uncle->setDocumentOrder(4);
+			$uncle->setId('uncle');
+			$scxml->addChild($uncle);
 
 		$this->model = new Model();
 		$this->model->addTarget($parent);
@@ -54,8 +54,8 @@ class TransitionTest extends PHPUnit_Framework_TestCase
 
     public function testGetEvent()
     {
-		$this->sut->setEvent('wedding');
-		$this->assertEquals(new Event('wedding'), $this->sut->getEvent());
+		$this->sut->setEvent('wedding test.other');
+		$this->assertEquals(array(new Event('wedding'), new Event('test.other')), $this->sut->getEvents());
     }
 
 	public function testGetCondition()
@@ -129,8 +129,10 @@ class TransitionTest extends PHPUnit_Framework_TestCase
 
 	public function testIsValidParent()
 	{
-		$this->AssertTrue($this->sut->isValidParent(new Scxml()));
 		$this->AssertTrue($this->sut->isValidParent(new State()));
+		$this->AssertTrue($this->sut->isValidParent(new Parallel()));
+		$this->AssertTrue($this->sut->isValidParent(new Initial()));
+		$this->AssertFalse($this->sut->isValidParent(new Scxml()));
 		$this->AssertFalse($this->sut->isValidParent(new Transition()));
 	}
 
