@@ -5,7 +5,7 @@ namespace scphp\model;
 /**
  * Base class for all "executable content" nodes.
  *
- * @see ExecutableNodeContainer
+ * @see ExecutableContainer
  *
  * @author bherring
  */
@@ -46,7 +46,7 @@ abstract class ExecutableNode extends CompoundNode
 	 */
 	public function isValidParent(CompoundNode $parent)
 	{
-		return ($parent instanceof ExecutableNodeContainer);
+		return ($parent instanceof ExecutableContainer);
 	}
 
 	/**

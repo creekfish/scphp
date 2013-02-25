@@ -37,6 +37,11 @@ class Model
      */
     private $transitions;
 
+	/**
+	 * @var IEvaluator
+	 */
+	private $evaluator;
+
 
     public function __construct()
     {
@@ -191,6 +196,27 @@ class Model
 		}
 		return NULL;
     }
+
+	/**
+	 * Set the evaluator used by this model.
+	 *
+	 * @param IEvaluator $evaluator
+	 * @return void
+	 */
+	public function setEvaluator(IEvaluator $evaluator)
+	{
+		$this->evaluator = $evaluator;
+	}
+
+	/**
+	 * Return the evaluator used by this model.
+	 *
+	 * @return IEvaluator
+	 */
+	public function getEvaluator()
+	{
+		return $this->evaluator;
+	}
 
     /**
      * Return TRUE if the target id is a valid transiton

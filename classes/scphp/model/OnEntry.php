@@ -8,7 +8,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class Onentry extends CompoundNode
+class Onentry extends ExecutableContainer
 {
     /**
      * Return TRUE if the provided node is a valid parent node type for this node.

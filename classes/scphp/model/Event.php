@@ -71,13 +71,16 @@ class Event
     }
 
 	/**
-	 * Return true if this event matches the specified.
+	 * Return true if this event's descriptor matches the specified event's name.
+	 * Each event attribute is a descriptor, which can match event names that
+	 * are passed to the scxml instance.
+	 *
 	 * See http://www.w3.org/TR/scxml/#EventDescriptors (section 3.12.1)
 	 * for more info.
 	 *
 	 *TODO test this and transtion isEnabledByEvent() against respective specs... with UNIT tests!
 	 *
-	 * @param Event $event The event to match
+	 * @param Event $event The event (name) to match.
 	 * @return boolean
 	 */
 	public function matches($event)

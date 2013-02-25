@@ -58,6 +58,7 @@ class Condition
 //TODO check this assumption against the spec (if empty expression string, return true)
 			return TRUE;
 		}
-		return $this->expression->evaluate();
+
+		return $this->expression->evaluate() == TRUE;
 	}
 }

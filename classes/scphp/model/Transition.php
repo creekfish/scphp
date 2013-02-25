@@ -6,7 +6,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-class Transition extends ExecutableNodeContainer
+class Transition extends ExecutableContainer
 {
 	const EVENT_DESCRIPTOR_SEPARATOR = ' ';
 
@@ -127,7 +127,8 @@ class Transition extends ExecutableNodeContainer
      */
     public function setCondition($condition_expression_text)
     {
-        $this->condition = new Condition(new Expression($condition_expression_text));
+//TODO How do we set the context?  How is that handled, based on where the transition is?  Other?  Datamodel built up at each level to scxml root?
+        $this->condition = new Condition(new Expression($condition_expression_text, $this->getModel()->getEvaluator()));
     }
 
 	/**
@@ -135,10 +136,11 @@ class Transition extends ExecutableNodeContainer
 	 * See http://www.w3.org/TR/scxml/#SelectingTransitions (section 3.13)
 	 * for more info.
 	 *
-	 * @param Event $match_event The event this transitions event(s) must match to be enabled
+	 * @param Event $match_event The event this transitions event(s) must match to be enabled, or not
+	 *			specified if matching a transition with no triggering events (only condition matters)
 	 * @return boolean
 	 */
-	public function isEnabledByEvent(Event $match_event)
+	public function isEnabledByEvent(Event $match_event = NULL)
 	{
 		if ($this->isTriggeredByEvent($match_event))  // if event can trigger (is a match)
 		{
@@ -161,11 +163,11 @@ class Transition extends ExecutableNodeContainer
 	 *
 	 * @see isEnabledByEvent
 	 *
-	 * @param Event $match_event The event this transitions event(s) must match to be enabled, or NULL if match
-	 * 			transition with no event.
+	 * @param Event $match_event The event this transitions event(s) must match to be enabled, or not
+	 * 			specified if matching transition with no event.
 	 * @return boolean
 	 */
-	public function isTriggeredByEvent(Event $match_event)
+	public function isTriggeredByEvent(Event $match_event = NULL)
 	{
 		$matches = FALSE;
 		if (!empty($this->events))

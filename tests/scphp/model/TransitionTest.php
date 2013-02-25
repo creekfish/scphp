@@ -1,5 +1,6 @@
 <?php
 
+use scphp\evaluator\PhpEvaluator;
 use scphp\Model;
 use scphp\model\Event;
 use scphp\model\Condition;
@@ -47,6 +48,7 @@ class TransitionTest extends PHPUnit_Framework_TestCase
 		$this->model->addTarget($parent);
 		$this->model->addTarget($uncle);
 		$this->model->addTarget($child);
+		$this->model->setEvaluator(new scphp\evaluator\PhpEvaluator());
 
 		$this->sut = new Transition();
 		$this->sut->setModel($this->model);
@@ -61,7 +63,7 @@ class TransitionTest extends PHPUnit_Framework_TestCase
 	public function testGetCondition()
 	{
 		$this->sut->setCondition('x < 0');
-		$this->assertEquals(new Condition(new Expression('x < 0')), $this->sut->getCondition());
+		$this->assertEquals(new Condition(new Expression('x < 0', new scphp\evaluator\PhpEvaluator())), $this->sut->getCondition());
 	}
 
 	public function testGetTargetsSingle()
@@ -118,6 +120,64 @@ class TransitionTest extends PHPUnit_Framework_TestCase
 	{
 		$this->sut->setTarget('parent child uncle');  // looks bogus... should be parallel sates, but just a test
 		$this->assertEquals($this->model->getTarget('parent'), $this->sut->getFirstTarget());
+	}
+
+	public function testIsTriggeredByEventExactMatch()
+	{
+		$this->sut->setEvent('error.test');
+		$this->assertTrue($this->sut->isTriggeredByEvent(new Event('error.test')));
+	}
+
+	public function testIsTriggeredByEventPartialMatch()
+	{
+		$this->sut->setEvent('error');
+		$this->assertTrue($this->sut->isTriggeredByEvent(new Event('error.test')));
+	}
+
+	public function testIsNotTriggeredByEvent()
+	{
+		$this->sut->setEvent('error.test.more');
+		$this->assertFalse($this->sut->isTriggeredByEvent(new Event('error.test')));
+	}
+
+	public function testIsEnabledByEventAndCondition()
+	{
+		$this->sut->setEvent('error.test');
+		$this->sut->setCondition(new Expression('TRUE', new scphp\evaluator\PhpEvaluator()));
+		$this->assertTrue($this->sut->isEnabledByEvent(new Event('error.test')));
+	}
+
+	public function testIsEnabledByConditionButNotTriggeredByEvent()
+	{
+		$this->sut->setEvent('event');
+		$this->sut->setCondition(new Expression('TRUE', new scphp\evaluator\PhpEvaluator()));
+		$this->assertFalse($this->sut->isEnabledByEvent(new Event('EVENT')));
+	}
+
+	public function testIsEnabledByEventButDisabledByCondition()
+	{
+		$this->sut->setEvent('event');
+		$this->sut->setCondition(new Expression('FALSE', new scphp\evaluator\PhpEvaluator()));
+		$this->assertFalse($this->sut->isEnabledByEvent(new Event('event')));
+	}
+
+	public function testIsNotEnabledByEventOrCondition()
+	{
+		$this->sut->setEvent('event');
+		$this->sut->setCondition(new Expression('FALSE', new scphp\evaluator\PhpEvaluator()));
+		$this->assertFalse($this->sut->isEnabledByEvent(new Event('EVENT')));
+	}
+
+	public function testIsEnabledByTrueConditionWithNoEvent()
+	{
+		$this->sut->setCondition(new Expression('TRUE', new scphp\evaluator\PhpEvaluator()));
+		$this->assertTrue($this->sut->isEnabledByEvent());
+	}
+
+	public function testIsNotEnabledByFalseConditionWithNoEvent()
+	{
+		$this->sut->setCondition(new Expression('FALSE', new scphp\evaluator\PhpEvaluator()));
+		$this->assertFalse($this->sut->isEnabledByEvent());
 	}
 
 	public function testIsValidChild()

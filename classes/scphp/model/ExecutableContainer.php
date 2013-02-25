@@ -10,7 +10,7 @@ namespace scphp\model;
  *
  * @author bherring
  */
-abstract class ExecutableNodeContainer extends CompoundNode
+abstract class ExecutableContainer extends CompoundNode
 {
 
 	/**

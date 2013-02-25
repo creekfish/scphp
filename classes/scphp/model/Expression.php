@@ -20,15 +20,24 @@ class Expression
      */
     private $evaluator;
 
+	/**
+	 * The data context for this expression.
+	 * @var \scphp\IContext
+	 */
+	private $context;
 
     /**
      * Constructor
      *
-     * @param string $text the text to be evaluated in the expression
-     */
-    public function __construct($text)
+     * @param string $text The text to be evaluated in the expression
+	 * @param \scphp\IEvaluator $evaluator The evaluator for this expression
+	 * @param \scphp\IContext $context The data context of this expression
+	 */
+    public function __construct($text, \scphp\IEvaluator $evaluator = NULL, \scphp\IContext $context = NULL)
     {
         $this->text = $text;
+		$this->setEvaluator($evaluator);
+		$this->setContext($context);
     }
 
     /**
@@ -54,9 +63,9 @@ class Expression
     /**
      * Set the evaluator for this expression.
      *
-     * @param IEvaluator $evaluator
+     * @param \scphp\IEvaluator $evaluator
      */
-    public function setEvaluator(IEvaluator $evaluator)
+    public function setEvaluator(\scphp\IEvaluator $evaluator)
     {
         $this->evaluator = $evaluator;
     }
@@ -64,12 +73,46 @@ class Expression
     /**
      * Get the text of this expression.
      *
-     * @return IEvaluator
+     * @return \scphp\IEvaluator
      */
     public function getEvaluator()
     {
         return $this->evaluator;
     }
+
+	/**
+	 * Set the data context for this expression.
+	 *
+	 * @param \scphp\IContext $context
+	 */
+	public function setContext($context)
+	{
+		if ($context === NULL)
+		{
+			$context = new \scphp\context\NullContext();  // default context
+		}
+		$this->context = $context;
+	}
+
+	/**
+	 * Return the data context for this expression.
+	 *
+	 * @return \scphp\IContext
+	 */
+	public function getContext()
+	{
+		return $this->context;
+	}
+
+	/**
+	 * Evaluate this expression and return the result.
+	 *
+	 * @return mixed
+	 */
+	public function evaluate()
+	{
+		return $this->getEvaluator()->evaluate($this->getContext(), $this->getText());
+	}
 
     /**
      * Render this expression as a string.
