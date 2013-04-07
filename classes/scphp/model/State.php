@@ -15,10 +15,10 @@ class State extends TransitionTarget
 	private $initial;
 
 
-    public function __construct()
+    public function __construct($id = NULL, $doc_order = NULL)
     {
 		$this->initial = NULL;
-        parent::__construct();
+        parent::__construct($id, $doc_order);
     }
 
 	/**

@@ -42,13 +42,11 @@ class Configuration
 	 */
 	private $atomic_states;
 
-	/**
-	 * Sorted list of document order keys for states.
-	 *
-	 * @var array of int
-	 */
-	private $states_doc_order;
-
+	public function __construct()
+	{
+		$this->states = array();
+		$this->atomic_states = array();
+	}
 
     public function addState(TransitionTarget $state)
     {
@@ -78,59 +76,82 @@ class Configuration
 		$this->states[$state->getDocumentOrder()] = $state;
 
         // add all ancestor states to this configuration
+		/** @var TransitionTarget $ancestor */
         foreach ($state->getAncestors() as $ancestor)
         {
-            $this->states[$state->getDocumentOrder()] = $ancestor;
+			if ($ancestor instanceof TransitionTarget)
+			{
+	            $this->states[$ancestor->getDocumentOrder()] = $ancestor;
+			}
         }
 
-		// add all initial descendant states to the configuration
-		// (those entered upon entering the state, without following any transitions)
-		$this->states = $this->states + $state->getInitialDescendants();  // array union
+		if ($state->isComposite())
+		{
+			// add all initial descendant states to the configuration
+			// (those entered upon entering the state, without following any transitions)
+			$descendants = $state->getInitialDescendants();
+			/** @var TransitionTarget $descendant */
+			foreach ($descendants as $descendant)
+			{
+				if (!$descendant->isComposite())
+				{
+					$this->atomic_states[$descendant->getDocumentOrder()] = $descendant;
+				}
+			}
+			$this->states = $this->states + $descendants;  // array union
+		}
+		else
+		{
+			$this->atomic_states[$state->getDocumentOrder()] = $state;
+		}
 
-		// rebuild the cached sorted doc order keys list
-		$this->states_doc_order = sort(array_keys($this->states));
+		// sort the state lists
+		ksort($this->states);
+		ksort($this->atomic_states);
     }
 
-	private function addDescendantsRecursive(TransitionTarget $state)
-	{
-		if ($state instanceof State)
-		{
-			if ($state->isComposite())
-			{
-				/** @var model\State $last_descendant  */
-				$last_descendant = NULL;
-				// add all descendant states to this configuration
-				foreach ($state->getIntialDescendants() as $descendant)
-				{
-					$this->states[$state->getDocumentOrder()] = $descendant;
-					$last_descendant = $descendant;
-				}
-				if ($last_descendant !== NULL)
-				{
-					$this->atomic_states[$last_descendant->getDocumentOrder()] = $last_descendant;
-				}
-			}
-			else
-			{
-				$this->atomic_states[$state->getDocumentOrder()] = $state;
-			}
-		}
-		else if ($state instanceof Parallel)
-		{
-			// add all parallel child states to the configuration
-			foreach ($state->getTargetChildren() as $child)
-			{
-				// add child to the configuration
-				$this->states[$state->getDocumentOrder()] = $child;
-				$this->addDescendantsRecursive($child);
-			}
-		}
-	}
+//	private function addDescendantsRecursive(TransitionTarget $state)
+//	{
+//		if ($state instanceof State)
+//		{
+//			if ($state->isComposite())
+//			{
+//				/** @var State $last_descendant  */
+//				$last_descendant = NULL;
+//				// add all descendant states to this configuration
+//				foreach ($state->getIntialDescendants() as $descendant)
+//				{
+//					$this->states[$state->getDocumentOrder()] = $descendant;
+//					$last_descendant = $descendant;
+//				}
+//				if ($last_descendant !== NULL)
+//				{
+//					$this->atomic_states[$last_descendant->getDocumentOrder()] = $last_descendant;
+//				}
+//			}
+//			else
+//			{
+//				$this->atomic_states[$state->getDocumentOrder()] = $state;
+//			}
+//		}
+//		else if ($state instanceof Parallel)
+//		{
+//			// add all parallel child states to the configuration
+//			foreach ($state->getTargetChildren() as $child)
+//			{
+//				// add child to the configuration
+//				$this->states[$state->getDocumentOrder()] = $child;
+//				$this->addDescendantsRecursive($child);
+//			}
+//		}
+//	}
 
     /**
      * Select transitions from this configuration
      * (of active states) that are enabled by the given
-     * event.
+     * event.  Preempt parallel transitions that conflict -
+	 * that target incompatible states that cannot
+	 * coexist in the same configuration.
      *
      * @param model\Event $event
      * @return array of Transition $transition
@@ -153,8 +174,23 @@ class Configuration
 				}
 			}
 		}
+		$selected = $this->preemptTransitions($selected);
+		ksort($selected);
+
 		return $selected;
     }
+
+	/**
+	 * @param array of Transition $transitions
+	 */
+	private function preemptTransitions($transitions)
+	{
+//		/** @var Transition $transition */
+//		foreach ($transitions as $transition)
+//		{
+//		}
+		return $transitions;
+	}
 
     /**
      * Enter all states in this configuration.
@@ -223,5 +259,31 @@ class Configuration
 
 		// contains all children of each parallel
 
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getAtomicStates()
+	{
+		return $this->atomic_states;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getStates()
+	{
+		return $this->states;
+	}
+
+	public function __toString()
+	{
+		$ret = '';
+		foreach ($this->getStates() as $state)
+		{
+			$ret .= (string) $state . '; ';
+		}
+		return $ret;
 	}
 }

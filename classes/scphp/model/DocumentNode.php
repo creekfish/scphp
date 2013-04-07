@@ -31,10 +31,10 @@ abstract class DocumentNode
     private $model;
 
 
-    public function __construct()
+    public function __construct($id = NULL, $doc_order = NULL)
     {
-        $this->document_order = NULL;
-        $this->id = NULL;
+		$this->id = $id;
+		$this->document_order = $doc_order;
     }
 
 	/**

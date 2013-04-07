@@ -24,11 +24,11 @@ abstract class CompoundNode extends DocumentNode
 	private $parent;
 
 
-	public function __construct()
+	public function __construct($id = NULL, $doc_order = NULL)
 	{
 		$this->children = array();
 		$this->parent = NULL;
-		parent::__construct();
+		parent::__construct($id, $doc_order);
 	}
 
 	/**

@@ -8,11 +8,6 @@ namespace scphp\model;
  */
 class Initial extends TransitionContainer
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * Add a transition to this initial element node, replacing
      * any existing transition (only one transition is permitted).

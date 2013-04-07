@@ -17,10 +17,10 @@ abstract class TransitionContainer extends CompoundNode
      */
     private $transitions;
 
-    public function __construct()
+    public function __construct($id = NULL, $doc_order = NULL)
     {
         $this->transitions = array();
-        parent::__construct();
+        parent::__construct($id, $doc_order);
     }
 
     /**

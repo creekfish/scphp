@@ -19,12 +19,10 @@ class ModelTest extends PHPUnit_Framework_TestCase
 
     public function setup()
     {
-        $do = 1;
-
 		$this->sut = new Model();
 
         $scxml = new Scxml();
-        $scxml->setDocumentOrder($do++);
+        $scxml->setDocumentOrder(1);
 
     }
 

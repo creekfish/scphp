@@ -11,11 +11,6 @@ namespace scphp\model;
  */
 class Parallel extends TransitionTarget
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
 	/**
 	 * Return a list of initial descendant states of this state
 	 * in document order - all states that are automatically
