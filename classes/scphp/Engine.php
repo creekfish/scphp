@@ -3,6 +3,8 @@
 namespace scphp;
 
 use scphp\model\Event;
+use scphp\engine\EventQueue;
+
 
 /**
  *
@@ -30,6 +32,7 @@ class Engine
 		$this->running = TRUE;
 
 		// stablilze the machine initially
+		$this->stabilize($this->getConfiguration());
 	}
 
 	public function stop()
@@ -50,6 +53,14 @@ class Engine
 		array_push($this->event_queue, $event);
 	}
 
+	/**
+	 * @return \scphp\Configuration
+	 */
+	public function getConfiguration()
+	{
+		return $this->configuration;
+	}
+
 	protected function processQueuedEvents()
 	{
 		while ($this->hasNextEvent())
@@ -63,7 +74,7 @@ class Engine
 	 *
 	 * @param Event $event - external event that triggers this macrostep
 	 * @return Configuration
-	 * @throws ModelException
+	 * @throws \scphp\model\ModelException
 	 */
 	public function takeNextMacroStep(Configuration $configuration, Event $event)
 	{
@@ -88,18 +99,20 @@ class Engine
 	 * and a microstep is taken.  Stabilization consists of taking a
 	 * series of microsteps and is the final part of a macrostep.
 	 *
-	 *  @return Configuration
+	 *  @return Configuration the new, stable configuration
 	 */
 	protected function stabilize(Configuration $configuration)
 	{
-		/** @var array of Event $internal_event_queue */
-		$internal_event_queue = array(new Event(NULL));  // start off with eventless transitions (taken in every microstep)
+		/** @var EventQueue */
+		$internal_event_queue = new EventQueue();
+		$internal_event_queue->addEvent(new Event(NULL));  // start off with eventless transitions (taken in every microstep)
 
 		// keep taking microsteps until there are no more internal events
-		while (!empty($internal_event_queue))
+		while ($internal_event_queue->hasEvents())
 		{
-			$internal_event = array_pop($internal_event_queue);
-			$configuration = $this->takeNextMicrostep($configuration, $internal_event);
+			/** @var Event $internal_event  */
+			$internal_event = $internal_event_queue->nextEvent();
+			$configuration = $this->takeNextMicrostep($configuration, $internal_event_queue);
 			$internal_event_queue = ???
 /*
   *fixme Each microstep results in a new configuration of states and a new internal event queue, the later consisting of the NULL event and all internal events added by the microstep...
@@ -117,7 +130,7 @@ class Engine
 	 * @return Configuration
 	 *
      */
-    protected function takeNextMicrostep(Configuration $configuration)
+    protected function takeNextMicrostep(Configuration $configuration, EventQueue $internal_event_queue)
     {
 
     }

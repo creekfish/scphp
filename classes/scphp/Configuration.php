@@ -110,6 +110,18 @@ class Configuration
 		ksort($this->atomic_states);
     }
 
+	/**
+	 * @param array $states TransitionTargets to add to this configuration.
+	 */
+	public function addStates(array $states)
+	{
+		/** @var TransitionTarget $state */
+		foreach ($states as $state)
+		{
+			$this->addState($state);
+		}
+	}
+
 //	private function addDescendantsRecursive(TransitionTarget $state)
 //	{
 //		if ($state instanceof State)
@@ -199,6 +211,7 @@ class Configuration
      */
     public function enterStates()
     {
+		//TODO this is the last part of enterStates() proceedure in W3C SCXML example algorithm...
 
     }
 
@@ -207,6 +220,8 @@ class Configuration
      */
     public function exitStates()
     {
+		//TODO this is the last part of exitStates() proceedure in W3C SCXML example algorithm...
+
 
     }
 
